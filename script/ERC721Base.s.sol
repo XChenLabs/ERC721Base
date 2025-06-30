@@ -2,17 +2,17 @@
 pragma solidity ^0.8.13;
 
 import {Script, console} from "forge-std/Script.sol";
-import {Counter} from "../src/Counter.sol";
+import {ERC721Base} from "../src/ERC721Base.sol";
 
-contract CounterScript is Script {
-    Counter public counter;
+contract ERC721BaseScript is Script {
+    ERC721Base public nftToken;
 
     function setUp() public {}
 
     function run() public {
         vm.startBroadcast();
 
-        counter = new Counter();
+        nftToken = new ERC721Base("GameToken", "GT", "ipfs://");
 
         vm.stopBroadcast();
     }

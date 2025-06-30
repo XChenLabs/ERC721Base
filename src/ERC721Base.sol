@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -27,12 +28,13 @@ import "@openzeppelin/contracts/utils/Counters.sol";
  *
  * _Deprecated in favor of https://wizard.openzeppelin.com/[Contracts Wizard]._
  */
-contract ERC721PresetMinterPauserAutoId is
+contract ERC721Base is
     Context,
     AccessControlEnumerable,
     ERC721Enumerable,
     ERC721Burnable,
-    ERC721Pausable
+    ERC721Pausable,
+    ERC721URIStorage
 {
     using Counters for Counters.Counter;
 
@@ -74,13 +76,18 @@ contract ERC721PresetMinterPauserAutoId is
      *
      * - the caller must have the `MINTER_ROLE`.
      */
-    function mint(address to) public virtual {
+    function safeMint(address to, string calldata tokenMetaURI) public virtual returns (uint256) {
         require(hasRole(MINTER_ROLE, _msgSender()), "ERC721PresetMinterPauserAutoId: must have minter role to mint");
 
         // We cannot just use balanceOf to create the new tokenId because tokens
         // can be burned (destroyed), so we need a separate counter.
-        _mint(to, _tokenIdTracker.current());
+        uint256 tokenId = _tokenIdTracker.current();
+        _safeMint(to, tokenId);
+        _setTokenURI(tokenId, tokenMetaURI);
+
         _tokenIdTracker.increment();
+
+        return tokenId;
     }
 
     /**
@@ -125,7 +132,15 @@ contract ERC721PresetMinterPauserAutoId is
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(AccessControlEnumerable, ERC721, ERC721Enumerable) returns (bool) {
+    ) public view virtual override(AccessControlEnumerable, ERC721, ERC721Enumerable, ERC721URIStorage) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+
+    function _burn(uint256 tokenId) internal virtual override(ERC721, ERC721URIStorage) {
+        super._burn(tokenId);
+    }
+
+    function tokenURI(uint256 tokenId) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
     }
 }
